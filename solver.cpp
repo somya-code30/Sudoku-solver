@@ -1,17 +1,13 @@
-/*  ---------------------------------------------------------
-    Sudoku Solver (C++)
-    --------------------------------------------------------- */
-
 #include <array>
 #include <iostream>
+#include <fstream>
 #include <optional>
 
 using namespace std;
 
 using Board = array<array<int, 9>, 9>;
-using Mask  = array<int, 9>;  // bit‑masks for rows / cols / boxes
+using Mask  = array<int, 9>;
 
-/* ---------------- Sample puzzle (0 = empty) ---------------- */
 Board load_board() {
     return {{
         {{5, 3, 0, 0, 7, 0, 0, 0, 0}},
@@ -26,7 +22,6 @@ Board load_board() {
     }};
 }
 
-/* ---------------- Pretty printer ---------------- */
 void print_board(const Board& b) {
     for (int r = 0; r < 9; ++r) {
         if (r && r % 3 == 0) cout << "---------------------\n";
@@ -38,7 +33,6 @@ void print_board(const Board& b) {
     }
 }
 
-/* ---------------- Find first empty cell ---------------- */
 optional<pair<int, int>> find_empty(const Board& b) {
     for (int r = 0; r < 9; ++r)
         for (int c = 0; c < 9; ++c)
@@ -47,10 +41,9 @@ optional<pair<int, int>> find_empty(const Board& b) {
     return nullopt;
 }
 
-/* ---------------- Backtracking solver ---------------- */
 bool solve(Board& b, Mask& rows, Mask& cols, Mask& boxes) {
     auto empty = find_empty(b);
-    if (!empty) return true;  // solved
+    if (!empty) return true;
 
     int r = empty->first, c = empty->second;
     int box = (r / 3) * 3 + (c / 3);
@@ -75,7 +68,6 @@ bool solve(Board& b, Mask& rows, Mask& cols, Mask& boxes) {
     return false;
 }
 
-/* ---------------- Initialize masks ---------------- */
 void prepare_masks(const Board& b, Mask& rows, Mask& cols, Mask& boxes) {
     rows.fill(0);
     cols.fill(0);
@@ -91,9 +83,19 @@ void prepare_masks(const Board& b, Mask& rows, Mask& cols, Mask& boxes) {
         }
 }
 
-/* ---------------- Main ---------------- */
 int main() {
-    Board board = load_board();
+    Board board;
+    ifstream fin("input.txt");
+    if (!fin) {
+        cout << "❌ Cannot open input.txt\n";
+        return 1;
+    }
+
+    for (int r = 0; r < 9; ++r)
+        for (int c = 0; c < 9; ++c)
+            fin >> board[r][c];
+    fin.close();
+
     cout << "Initial puzzle:\n";
     print_board(board);
 
@@ -104,8 +106,18 @@ int main() {
     if (solve(board, rows, cols, boxes)) {
         cout << "Solution:\n";
         print_board(board);
+
+        ofstream fout("solved.txt");
+        for (int r = 0; r < 9; ++r) {
+            for (int c = 0; c < 9; ++c)
+                fout << board[r][c] << " ";
+            fout << "\n";
+        }
+        fout.close();
+        cout << "\n Solution written to solved.txt\n";
     } else {
         cout << "No solution exists.\n";
     }
     return 0;
 }
+
